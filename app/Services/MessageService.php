@@ -29,8 +29,12 @@ class MessageService
 
         $message->load('sender');
 
-        // Broadcast to ALL participants (including sender for real-time display)
-        broadcast(new MessageSent($message));
+        try {
+            // Broadcast to ALL participants (including sender for real-time display)
+            broadcast(new MessageSent($message));
+        } catch (\Exception $e) {
+            \Log::warning("Broadcasting message sent failed: " . $e->getMessage());
+        }
 
         return $message;
     }
@@ -40,12 +44,16 @@ class MessageService
         $updated = $this->messageRepository->markAsRead($conversationId, $userId);
 
         if ($updated) {
-            // Notify the sender that their messages have been read
-            broadcast(new MessagesRead(
-                $conversationId,
-                $userId,
-                now()->toIso8601String()
-            ));
+            try {
+                // Notify the sender that their messages have been read
+                broadcast(new MessagesRead(
+                    $conversationId,
+                    $userId,
+                    now()->toIso8601String()
+                ));
+            } catch (\Exception $e) {
+                \Log::warning("Broadcasting message read failed: " . $e->getMessage());
+            }
         }
 
         return $updated;

@@ -24,7 +24,11 @@ class NotificationService
             'data'    => $data,
         ]);
 
-        broadcast(new NotificationSent($notification));
+        try {
+            broadcast(new NotificationSent($notification));
+        } catch (\Exception $e) {
+            \Log::warning("Broadcasting notification failed: " . $e->getMessage());
+        }
 
         return $notification;
     }
